@@ -1,50 +1,46 @@
-# Welcome to your Expo app 👋
+# Analisis Teknis Proyek Aplikasi FlavorDash - UTS Pemrograman Mobile
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+## 
 
-## Get started
+## 1\. Analisis Responsivitas Katalog 
 
-1. Install dependencies
+* ### Implementasi Flexbox \& Nested View
 
-   ```bash
-   npm install
-   ```
+Dalam proyek ini, tata letak katalog dirancang menggunakan komponen dasar React Native (`View`, `Text`, `Image`) dengan pendekatan **Flexbox**.
 
-2. Start the app
+* **`flexDirection: 'row'`**: Digunakan pada container utama untuk menyejajarkan gambar produk dan blok deskripsi secara horizontal dalam satu baris.
+* **Nested View**: Struktur ini memungkinkan pemisahan logika layout antara aset visual (gambar) dan informasi tekstual (deskripsi), sehingga pengaturan spasi (margin/padding) menjadi lebih presisi.
+* ### Solusi Terhadap Fragmentasi Layar
 
-   ```bash
-   npx expo start
-   ```
+Penggunaan **unit proporsional (`flex: 1`)** pada container deskripsi adalah kunci utama dalam menangani fragmentasi layar pada ekosistem mobile (Android \& iOS).
 
-In the output, you'll find options to open the app in a
+* **Alasan Teknis**: Perangkat mobile memiliki resolusi dan *density* pixel yang sangat beragam. Jika menggunakan ukuran absolut (pixel tetap), layout berisiko terpotong pada layar kecil atau terlihat tidak proporsional pada layar besar.
+* **Hasil**: Dengan `flex: 1`, area deskripsi akan secara otomatis melebar untuk mengisi sisa ruang yang tersedia setelah lebar gambar ditentukan. Hal ini memastikan UI tetap konsisten, fungsional, dan estetis di berbagai tipe perangkat.
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+\-------------------
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## 2\. Analisis Keamanan Stateless \& JWT
 
-## Get a fresh project
+### Mekanisme Middleware \& Route Protection
 
-When you're ready, run:
+Aplikasi ini menggunakan **Expo Router** untuk manajemen navigasi. Proteksi rute diimplementasikan pada level **Middleware** (di dalam `\_layout.js`).
 
-```bash
-npm run reset-project
-```
+* **Alur Kerja**: Sebelum sebuah halaman (seperti 'Detail Pesanan') dirender, middleware akan mengecek keberadaan token JWT di penyimpanan lokal. Jika token tidak ditemukan atau tidak valid, pengguna akan secara otomatis diarahkan kembali ke halaman Login.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Anatomi JSON Web Token (JWT)
 
-## Learn more
+Implementasi keamanan ini didasarkan pada tiga komponen utama JWT:
 
-To learn more about developing your project with Expo, look at the following resources:
+1. **Header**: Mendefinisikan tipe token dan algoritma enkripsi yang digunakan.
+2. **Payload**: Berisi klaim atau data pengguna (seperti user\_id) yang diperlukan oleh aplikasi.
+3. **Signature**: Bagian krusial yang menjamin integritas token. Signature dibuat dengan menggabungkan encoded header, payload, dan secret key untuk memastikan token tidak dimodifikasi oleh pihak yang tidak berwenang.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Efisiensi Stateless vs Stateful
 
-## Join the community
+Tim memilih metode **Stateless Authentication** karena aplikasi direncanakan untuk skala besar dengan jutaan pengguna.
 
-Join our community of developers creating universal apps.
+* **Skalabilitas**: Berbeda dengan *Stateful (Session-based)* yang mengharuskan server menyimpan data sesi di memori (RAM) atau database untuk setiap user aktif, *Stateless* memindahkan beban tersebut ke sisi klien.
+* **Performa**: Server hanya perlu memvalidasi Signature dari token yang dikirimkan. Tanpa perlu melakukan *query* database sesi berulang kali, penggunaan sumber daya server menjadi jauh lebih efisien dan respons aplikasi menjadi lebih cepat bagi jutaan pengguna sekaligus.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+\---
+
