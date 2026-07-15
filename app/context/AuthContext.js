@@ -1,8 +1,31 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, useSegments } from 'expo-router';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+
+// Key untuk menyimpan token di AsyncStorage
+const TOKEN_KEY = 'flavourdash_jwt_token';
 
 // Membuat Context untuk Authentication
 const AuthContext = createContext({});
+
+// ─────────────────────────────────────────────
+// Simulasi pembuatan JWT token (format: header.payload.signature)
+// Dalam aplikasi nyata, token ini diperoleh dari server/API
+// ─────────────────────────────────────────────
+function generateMockJWT(username) {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(
+    JSON.stringify({
+      sub: username,
+      name: username,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60, // 7 hari
+    })
+  );
+  // Simulasi signature (dalam produksi digenerate server dengan secret key)
+  const signature = btoa(`${username}-flavourdash-secret`).replace(/=/g, '');
+  return `${header}.${payload}.${signature}`;
+}
 
 export function AuthProvider({ children }) {
   const [token, setToken] = useState(null);
@@ -10,47 +33,62 @@ export function AuthProvider({ children }) {
   const router = useRouter();
   const segments = useSegments();
 
-  // Efek ini berjalan setiap kali token atau route segments berubah
-  // untuk menentukan apakah user boleh mengakses halaman tertentu
+  // ─── Load token dari AsyncStorage saat app pertama kali dijalankan ───
   useEffect(() => {
-    // Tunggu sampai loading selesai
+    const loadToken = async () => {
+      try {
+        const savedToken = await AsyncStorage.getItem(TOKEN_KEY);
+        if (savedToken) {
+          setToken(savedToken);
+        }
+      } catch (error) {
+        console.log('[AuthContext] Error loading token:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadToken();
+  }, []);
+
+  // ─── Route Protection: redirect berdasarkan status token ───
+  useEffect(() => {
     if (isLoading) return;
 
-    // Cek apakah user sedang berada di halaman login
     const inAuthGroup = segments[0] === 'login';
 
     if (!token && !inAuthGroup) {
-      // Jika tidak ada token dan user tidak di halaman login, arahkan ke login
+      // Tidak ada token → arahkan ke login
       router.replace('/login');
     } else if (token && inAuthGroup) {
-      // Jika ada token dan user di halaman login, arahkan ke halaman utama
+      // Ada token dan di halaman login → arahkan ke halaman utama
       router.replace('/');
     }
   }, [token, segments, isLoading]);
 
-  // Fungsi untuk simulasi login (set JWT token palsu)
-  const login = (username, password) => {
-    // Dalam aplikasi nyata, ini akan memanggil API dan mengembalikan JWT token
+  // ─── Login: generate JWT dan simpan ke AsyncStorage ───
+  const login = async (username, password) => {
     if (username && password) {
-      setToken('dummy-jwt-token-xyz123');
+      const jwt = generateMockJWT(username);
+      setToken(jwt);
+      try {
+        await AsyncStorage.setItem(TOKEN_KEY, jwt);
+        console.log('[AuthContext] Token saved to AsyncStorage');
+      } catch (error) {
+        console.log('[AuthContext] Error saving token:', error);
+      }
     }
   };
 
-  // Fungsi untuk logout
-  const logout = () => {
+  // ─── Logout: hapus token dari state dan AsyncStorage ───
+  const logout = async () => {
     setToken(null);
+    try {
+      await AsyncStorage.removeItem(TOKEN_KEY);
+      console.log('[AuthContext] Token removed from AsyncStorage');
+    } catch (error) {
+      console.log('[AuthContext] Error removing token:', error);
+    }
   };
-
-  // Simulasi cek session saat aplikasi pertama kali dimuat
-  useEffect(() => {
-    const checkToken = async () => {
-      // Simulasi delay cek async storage atau API
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
-    };
-    checkToken();
-  }, []);
 
   return (
     <AuthContext.Provider value={{ token, login, logout, isLoading }}>
@@ -64,7 +102,7 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
-// Dummy default export to prevent Expo Router warning/crash
+// Dummy default export agar Expo Router tidak warning
 export default function AuthContextRoute() {
   return null;
 }

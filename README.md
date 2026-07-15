@@ -1,46 +1,134 @@
-# Analisis Teknis Proyek Aplikasi FlavorDash - UTS Pemrograman Mobile
+# 🍽️ FlavorDash — Food Catalog & Order Delivery App
 
-## 
+Aplikasi mobile berbasis **React Native + Expo** untuk katalog makanan dan manajemen pesanan.
+Dikembangkan untuk memenuhi requirement **Ujian Akhir Semester (UAS)**.
 
-## 1\. Analisis Responsivitas Katalog 
+---
 
-* ### Implementasi Flexbox \& Nested View
+## 📱 Fitur Utama
 
-Dalam proyek ini, tata letak katalog dirancang menggunakan komponen dasar React Native (`View`, `Text`, `Image`) dengan pendekatan **Flexbox**.
+| Fitur | Status | Keterangan |
+|-------|--------|------------|
+| 🔐 JWT Authentication | ✅ | Login dengan simulasi JWT, disimpan di AsyncStorage |
+| 🛡️ Route Protection | ✅ | Detail pesanan hanya bisa diakses setelah login |
+| 🍕 Food Catalog | ✅ | Mengambil data dari Mock API (dummyjson.com) |
+| 📋 Detail Pesanan | ✅ | Nama, jumlah, harga, status, ID pesanan |
+| 📷 Camera | ✅ | Ambil foto bukti penerimaan pesanan |
+| 🗺️ Maps | ✅ | Peta interaktif dengan Leaflet.js (OpenStreetMap) |
+| 🌙 Light / Dark Mode | ✅ | Toggle mode warna — light (biru) & dark (slate) |
+| 📐 Responsive Layout | ✅ | Flexbox + Dimensions, responsif semua ukuran layar |
 
-* **`flexDirection: 'row'`**: Digunakan pada container utama untuk menyejajarkan gambar produk dan blok deskripsi secara horizontal dalam satu baris.
-* **Nested View**: Struktur ini memungkinkan pemisahan logika layout antara aset visual (gambar) dan informasi tekstual (deskripsi), sehingga pengaturan spasi (margin/padding) menjadi lebih presisi.
-* ### Solusi Terhadap Fragmentasi Layar
+---
 
-Penggunaan **unit proporsional (`flex: 1`)** pada container deskripsi adalah kunci utama dalam menangani fragmentasi layar pada ekosistem mobile (Android \& iOS).
+## 🚀 Cara Menjalankan
 
-* **Alasan Teknis**: Perangkat mobile memiliki resolusi dan *density* pixel yang sangat beragam. Jika menggunakan ukuran absolut (pixel tetap), layout berisiko terpotong pada layar kecil atau terlihat tidak proporsional pada layar besar.
-* **Hasil**: Dengan `flex: 1`, area deskripsi akan secara otomatis melebar untuk mengisi sisa ruang yang tersedia setelah lebar gambar ditentukan. Hal ini memastikan UI tetap konsisten, fungsional, dan estetis di berbagai tipe perangkat.
+### Prasyarat
+- Node.js >= 18
+- Expo CLI (`npm install -g expo-cli`)
+- Expo Go app di HP Android/iOS
 
-\-------------------
+### Langkah
 
-## 2\. Analisis Keamanan Stateless \& JWT
+```bash
+# Clone / buka folder project
+cd flavour-dash
 
-### Mekanisme Middleware \& Route Protection
+# Install dependencies
+npm install
 
-Aplikasi ini menggunakan **Expo Router** untuk manajemen navigasi. Proteksi rute diimplementasikan pada level **Middleware** (di dalam `\_layout.js`).
+# Jalankan dev server
+npx expo start
 
-* **Alur Kerja**: Sebelum sebuah halaman (seperti 'Detail Pesanan') dirender, middleware akan mengecek keberadaan token JWT di penyimpanan lokal. Jika token tidak ditemukan atau tidak valid, pengguna akan secara otomatis diarahkan kembali ke halaman Login.
+# Scan QR code dengan Expo Go
+```
 
-### Anatomi JSON Web Token (JWT)
+---
 
-Implementasi keamanan ini didasarkan pada tiga komponen utama JWT:
+## 🏗️ Struktur Project
 
-1. **Header**: Mendefinisikan tipe token dan algoritma enkripsi yang digunakan.
-2. **Payload**: Berisi klaim atau data pengguna (seperti user\_id) yang diperlukan oleh aplikasi.
-3. **Signature**: Bagian krusial yang menjamin integritas token. Signature dibuat dengan menggabungkan encoded header, payload, dan secret key untuk memastikan token tidak dimodifikasi oleh pihak yang tidak berwenang.
+```
+flavour-dash/
+├── app/
+│   ├── _layout.js              # Root layout (ThemeProvider + AuthProvider)
+│   ├── index.js                # Halaman Katalog Makanan
+│   ├── login.js                # Halaman Login (JWT)
+│   ├── detail.js               # Halaman Detail Pesanan (protected)
+│   ├── camera.js               # Halaman Kamera (bukti foto)
+│   ├── maps.js                 # Halaman Peta Restoran
+│   ├── components/
+│   │   └── FoodCard.js         # Komponen card makanan
+│   ├── context/
+│   │   ├── AuthContext.js      # JWT Auth + AsyncStorage
+│   │   └── ThemeContext.js     # Light/Dark mode
+│   ├── data/
+│   │   └── foodData.js         # Data statis (legacy)
+│   └── services/
+│       └── foodService.js      # Mock API service
+├── app.json                    # Konfigurasi Expo + permissions
+└── package.json
+```
 
-### Efisiensi Stateless vs Stateful
+---
 
-Tim memilih metode **Stateless Authentication** karena aplikasi direncanakan untuk skala besar dengan jutaan pengguna.
+## 🔐 Autentikasi (FR-01, FR-02)
 
-* **Skalabilitas**: Berbeda dengan *Stateful (Session-based)* yang mengharuskan server menyimpan data sesi di memori (RAM) atau database untuk setiap user aktif, *Stateless* memindahkan beban tersebut ke sisi klien.
-* **Performa**: Server hanya perlu memvalidasi Signature dari token yang dikirimkan. Tanpa perlu melakukan *query* database sesi berulang kali, penggunaan sumber daya server menjadi jauh lebih efisien dan respons aplikasi menjadi lebih cepat bagi jutaan pengguna sekaligus.
+- Login menggunakan username dan password **apapun** (tidak boleh kosong)
+- Token JWT di-generate secara lokal dengan format `header.payload.signature`
+- Token disimpan di **AsyncStorage** — tetap tersimpan meski app di-restart
+- Logout akan menghapus token dari AsyncStorage
+- Halaman **Detail Pesanan**, **Kamera**, dan **Maps** terlindungi oleh route protection
 
-\---
+---
 
+## 🌐 Mock API (FR-03)
+
+Data makanan diambil dari **[DummyJSON](https://dummyjson.com/recipes)** — free REST API tanpa autentikasi.
+Jika request gagal (offline/error), sistem otomatis menggunakan data lokal sebagai fallback.
+
+---
+
+## 📷 Kamera (FR-06)
+
+1. Buka Detail Pesanan → tap **"Ambil Bukti Foto"**
+2. App meminta izin kamera
+3. Tampil viewfinder dengan guide frame
+4. Tap tombol capture (lingkaran putih)
+5. Preview foto + pilihan **"Foto Ulang"** atau **"Gunakan Foto Ini"**
+
+---
+
+## 🗺️ Maps (FR-07)
+
+- Menggunakan **Leaflet.js + OpenStreetMap** via WebView (**tanpa Google Maps API Key**)
+- Menampilkan **2 marker**: lokasi restoran (🍽️) dan lokasi pengiriman (📍)
+- Garis rute **dashed** antara restoran dan tujuan pengiriman
+
+---
+
+## 🎨 Tema
+
+| Mode | Warna Utama | Background |
+|------|-------------|------------|
+| ☀️ Light | `#2563EB` (Blue 600) | `#EFF6FF` (Blue 50) |
+| 🌙 Dark | `#3B82F6` (Blue 500) | `#0F172A` (Slate 900) |
+
+Toggle mode tersedia di header halaman Katalog dan di pojok kanan atas halaman Login.
+
+---
+
+## 📦 Dependencies
+
+| Package | Kegunaan |
+|---------|----------|
+| `expo-router` | File-based routing |
+| `expo-camera` | Fitur kamera |
+| `@react-native-async-storage/async-storage` | Simpan JWT token |
+| `react-native-webview` | Embed peta Leaflet.js |
+| `react-native-safe-area-context` | SafeAreaView cross-platform |
+
+---
+
+## 👨‍💻 Developer
+
+**FlavorDash** — Proyek UAS React Native  
+Dibuat dengan ❤️ menggunakan Expo + React Native

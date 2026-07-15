@@ -1,67 +1,123 @@
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Dimensions,
+  Image,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-// Komponen FoodCard reusable
-export default function FoodCard({ item, onPress }) {
+const { width } = Dimensions.get('window');
+
+// ─────────────────────────────────────────────
+// FoodCard — Komponen reusable untuk item makanan
+// Menggunakan Flexbox row: gambar di kiri, info di kanan
+// Layout responsif menggunakan Dimensions dan persentase
+// ─────────────────────────────────────────────
+export default function FoodCard({ item, onPress, theme }) {
   return (
-    <TouchableOpacity style={styles.cardContainer} onPress={onPress}>
-      {/* Gambar makanan di kiri */}
+    <TouchableOpacity
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.card,
+          borderColor: theme.cardBorder,
+          shadowColor: theme.shadow,
+        },
+      ]}
+      onPress={onPress}
+      activeOpacity={0.83}
+    >
+      {/* Gambar makanan di sebelah kiri (FR-04) */}
       <Image
         source={{ uri: item.image }}
         style={styles.image}
         resizeMode="cover"
       />
 
-      {/* Deskripsi di kanan, menggunakan flex: 1 untuk responsive */}
-      <View style={styles.infoContainer}>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.description} numberOfLines={2}>
+      {/* Informasi makanan di sebelah kanan */}
+      <View style={styles.info}>
+        <Text style={[styles.name, { color: theme.text }]} numberOfLines={1}>
+          {item.name}
+        </Text>
+        <Text style={[styles.description, { color: theme.subtext }]} numberOfLines={2}>
           {item.description}
         </Text>
-        <Text style={styles.price}>{item.price}</Text>
+
+        {/* Baris harga dan badge status */}
+        <View style={styles.bottomRow}>
+          <Text style={[styles.price, { color: theme.price }]}>{item.price}</Text>
+          {item.status && (
+            <View style={[styles.badge, { backgroundColor: theme.badge }]}>
+              <Text style={[styles.badgeText, { color: theme.badgeText }]} numberOfLines={1}>
+                {item.status}
+              </Text>
+            </View>
+          )}
+        </View>
       </View>
     </TouchableOpacity>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
-    flexDirection: 'row', // Layout flexbox baris (gambar di kiri, text di kanan)
-    backgroundColor: '#1E293B',
+  card: {
+    flexDirection: 'row',         // Gambar kiri, info kanan (FR-04)
     borderRadius: 16,
-    marginBottom: 16,
     padding: 12,
-    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 6,
-    elevation: 4, // Untuk bayangan di Android
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 4,
     borderWidth: 1,
-    borderColor: '#334155',
   },
+
+  // Gambar — ukuran responsif berdasarkan lebar layar
   image: {
-    width: 80,
-    height: 80,
+    width: width * 0.22,
+    height: width * 0.22,
     borderRadius: 12,
-    marginRight: 12,
+    marginRight: 14,
+    flexShrink: 0,
   },
-  infoContainer: {
-    flex: 1, // Memenuhi sisa ruang di sebelah kanan
+
+  // Informasi — mengisi sisa ruang (flex: 1)
+  info: {
+    flex: 1,
     justifyContent: 'center',
+    gap: 4,
   },
   name: {
-    fontSize: 16,
+    fontSize: width * 0.042,
     fontWeight: 'bold',
-    color: '#F8FAFC',
-    marginBottom: 4,
+    lineHeight: width * 0.054,
   },
   description: {
-    fontSize: 14,
-    color: '#94A3B8',
-    marginBottom: 8,
+    fontSize: width * 0.032,
+    lineHeight: width * 0.045,
+  },
+
+  // Baris bawah: harga + badge
+  bottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 6,
+    flexWrap: 'wrap',
+    gap: 6,
   },
   price: {
-    fontSize: 15,
+    fontSize: width * 0.04,
+    fontWeight: '700',
+  },
+  badge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    maxWidth: '55%',
+  },
+  badgeText: {
+    fontSize: width * 0.026,
     fontWeight: '600',
-    color: '#F59E0B', // Warna amber khas
   },
 });
